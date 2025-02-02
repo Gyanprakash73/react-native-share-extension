@@ -2,7 +2,7 @@
 //  ShareViewController.swift
 //  ShareExtension
 //
-//  Created by Buzzler Technologies on 02/02/25.
+//  Created by
 //
 
 import UIKit
