@@ -1,12 +1,18 @@
 import React, {useEffect, useState} from 'react';
-import {View, Image, Text, Button} from 'react-native';
+import {View, Image, Text, Button, Platform, NativeModules} from 'react-native';
 import RNFS from 'react-native-fs';
+
+const {SharedImageModule} = NativeModules;
 
 const App = () => {
   const [sharedImage, setSharedImage] = useState(null);
 
   useEffect(() => {
-    fetchSharedImage();
+    if (Platform.OS == 'ios') {
+      fetchSharedImage();
+    } else {
+      fetchSharedImageAndroid();
+    }
   }, []);
 
   const fetchSharedImage = async () => {
@@ -28,6 +34,17 @@ const App = () => {
     } catch (error) {
       console.error('Error fetching shared image:', error);
     }
+  };
+
+  const fetchSharedImageAndroid = () => {
+    SharedImageModule.getSharedImage()
+      .then(result => {
+        if (result?.type === 'image' && result?.value) {
+          console.log('Shared image:', result.value);
+          setSharedImage(result.value);
+        }
+      })
+      .catch(console.error);
   };
 
   const removeSharedImage = async () => {
@@ -53,6 +70,15 @@ const App = () => {
     }
   };
 
+  const removeSharedImageAndroid = () => {
+    SharedImageModule.clearSharedImage()
+      .then(() => {
+        setSharedImage(null);
+        console.log('Shared image cleared');
+      })
+      .catch(console.error);
+  };
+
   return (
     <View style={{flex: 1, alignItems: 'center', paddingTop: 50}}>
       {sharedImage ? (
@@ -61,12 +87,26 @@ const App = () => {
             source={{uri: sharedImage}}
             style={{width: 400, height: 400, resizeMode: 'contain'}}
           />
-          <Button title="Remove Image" onPress={removeSharedImage} />
+          <Button
+            title="Remove Image"
+            onPress={() =>
+              Platform.OS == 'ios'
+                ? removeSharedImage()
+                : removeSharedImageAndroid()
+            }
+          />
         </>
       ) : (
         <>
           <Text>No image shared</Text>
-          <Button title="Get Image" onPress={fetchSharedImage} />
+          <Button
+            title="Get Image"
+            onPress={() =>
+              Platform.OS == 'ios'
+                ? fetchSharedImage()
+                : fetchSharedImageAndroid()
+            }
+          />
         </>
       )}
     </View>
